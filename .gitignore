@@ -3,6 +3,7 @@
 
 # Envs
 .conda_env
+config.json
 
 # Folders
 build/
