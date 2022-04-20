@@ -4,14 +4,18 @@
   "description": "Django webserver with react as frontend and postgres as database",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start-prod": "export NODE_ENV=production && (gulp & python3 manage.py runserver)",
+    "start-dev": "gulp & ./scripts/start-django.sh",
+    "django": ". ./scripts/start-django.sh",
+    "gulp": "gulp"
   },
   "author": "Mikae Lindahl",
   "license": "ISC",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.1.1",
-    "@types/react-router-dom": "^5.3.3",
     "bootstrap": "^5.1.3",
+    "debug": "^4.3.4",
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.3.0",
     "window-or-global": "^1.0.1"
@@ -20,6 +24,8 @@
     "@types/node": "^17.0.25",
     "@types/react": "^18.0.5",
     "@types/react-dom": "^18.0.1",
+    "@types/react-router-dom": "^5.3.3",
+    "@types/window-or-global": "^1.0.4",
     "browser-sync": "^2.27.9",
     "css-loader": "^6.7.1",
     "gulp": "^4.0.2",
@@ -32,6 +38,7 @@
     "style-loader": "^3.3.1",
     "ts-loader": "^9.2.8",
     "typescript": "^4.6.3",
+    "webpack": "^5.72.0",
     "webpack-stream": "^7.0.0"
   }
 }

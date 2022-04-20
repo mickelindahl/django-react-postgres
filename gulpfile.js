@@ -34,7 +34,7 @@ function transpileStyles() {
     return src([
         'node_modules/bootstrap/scss/bootstrap.scss',
         'node_modules/@fortawesome/fontawesome-free/css/all.css',
-        'frontend-react/styles/app.scss'
+        'frontend-react/resources/styles/app.scss'
     ])
         .pipe(sass({outputStyle: 'compressed'}))
         .on('error', notify.onError(function (e) {
@@ -70,7 +70,7 @@ function reactBundle() {
         .pipe(dest('build/'));
 }
 
-function openBrowserIfNotActive() {
+function openBrowserIfNotActive(cb) {
     if (browserSync.active) {
         browserSync.exit();
     } else {
@@ -79,13 +79,15 @@ function openBrowserIfNotActive() {
             port: '2998'
         });
     }
+    cb()
 }
 
 function liveUpdate() {
-    watch('frontend-react/resources/fonts/**/*', [fonts])
-    watch('frontend-react/resources/images/**/*', [images])
-    watch('frontend-react/resources/styles/**/*.scss', [transpileStyles])
-    watch('frontend-react/resources/js/**/*.js', [bundleJs])
+    console.log('Watch')
+    watch('frontend-react/resources/fonts/**/*', fonts)
+    watch('frontend-react/resources/images/**/*', images)
+    watch('frontend-react/resources/styles/**/*.scss', transpileStyles)
+    // watch('frontend-react/resources/js/**/*.js', bundleJs)
     watch('**/templates/**/*.html').on('change', browserSync.reload);
 }
 
@@ -100,10 +102,16 @@ function liveUpdate() {
 // gulp.task('watch', gulp.series('browserSync',));
 // gulp.task('default', gulp.series('build', 'watch'));
 
-exports.default = function () {
-    series(
-        parallel(fonts, images, favicon, transpileStyles, bundleJs),
-        openBrowserIfNotActive
+exports.default = series(
+        parallel(
+            // fonts, images, favicon,
+            transpileStyles,
+            //bundleJs,
+            reactBundle),
+        // openBrowserIfNotActive
     )
-    liveUpdate()
-}
+// function (cb) {
+//
+//     liveUpdate()
+//     cb()
+// }

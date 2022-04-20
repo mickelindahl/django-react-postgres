@@ -6,7 +6,7 @@
 
 import React from "react";
 import {BrowserRouter as Router, Route} from "react-router-dom";
-import url from "../constants/url.jsx";
+import url from "../constants/url";
 const debug = require('debug')('bk-manager:frontend-react:routers:RoutingApp');
 
 function Home() {

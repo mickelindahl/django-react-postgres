@@ -10,6 +10,7 @@ module.exports = {
     output: {
         filename: 'app.js'
     },
+    // context: path.resolve(__dirname, 'frontend-react'),
     mode,
     watch: mode == 'development',
     devtool: mode == 'development' ? 'eval-source-map' : 'source-map',
@@ -19,7 +20,7 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.tsx?$/,
+                test: [ /\.tsx?$/,  /\.ts$/],
                 use: 'ts-loader',
                 exclude: /node_modules/,
             },
@@ -52,7 +53,7 @@ module.exports = {
     //     })
     // ],
     resolve: {
-        extensions: ['tsx', '.ts', '.js'],
+        extensions: ['.tsx', '.ts', '.js'],
         // fallback: {
         //     "stream": require.resolve("stream-browserify"),
         //     "buffer": require.resolve("buffer")

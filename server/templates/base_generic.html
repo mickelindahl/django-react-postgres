@@ -1,0 +1,14 @@
+{% load static %}
+<!doctype html>
+<head>
+    {% block title %}<title>Django react prostgresql app</title>{% endblock %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+</head>
+<body style="height:100vh;">
+<div class="container d-flex justify-content-center align-items-center h-100">
+    <div>
+        {% block sidebar %}<!-- insert default navigation text for every page --> {% endblock %}
+        {% block content %}<!-- default content text (typically empty) --> {% endblock %}
+    </div>
+</div>
+</body>

@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import RoutingApp from "./routers/RoutingApp.jsx";
-import enableDebug from "./lib/enableDebug.jsx";
+import RoutingApp from "./routers/RoutingApp";
+import enableDebug from "./lib/enableDebug";
 
 enableDebug();
 

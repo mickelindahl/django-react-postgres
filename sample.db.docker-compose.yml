@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  {db-container-name}:
+    image: postgres:14.2
+    container_name: {db-container-name}
+    hostname: {db-container-name}
+    environment:
+        POSTGRES_USER: {postgres-user}
+        POSTGRES_PASSWORD: {postgres-pass}
+        PGDATA: /var/lib/postgresql/data
+    ports:
+        - "{postgres-port-external}:{postgres-port-internal}"
+    restart: always
+    volumes:
+        - {db-volume-name}:/var/lib/postgresql/data
+    networks:
+      - {network}
+

@@ -3,9 +3,19 @@
 
 # Envs
 .conda_env
-config.json
+credentials.txt
+.env
+conda-settings.txt
 
 # Folders
 build/
 node_modules/
+venv
+__pycache__
+
+# Compose files
+docker-compose.yml
+db.docker-compose.yml
+network.docker-compose.yml
+volumes.docker-compose.yml
 
