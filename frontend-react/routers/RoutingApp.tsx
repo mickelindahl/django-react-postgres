@@ -5,8 +5,9 @@
 "use strict";
 
 import React from "react";
-import {BrowserRouter as Router, Route} from "react-router-dom";
+import {BrowserRouter as Router, Routes, Route} from "react-router-dom";
 import url from "../constants/url";
+
 const debug = require('debug')('bk-manager:frontend-react:routers:RoutingApp');
 
 function Home() {
@@ -28,9 +29,9 @@ export default function RoutingApp() {
 
     return (
         <Router>
-            <div>
-                <Route path={`${url.APP_BASE}/home`} element={Home()}/>
-            </div>
+            <Routes>
+                <Route path={`${url.APP_BASE}/`} element={Home()}/>
+            </Routes>
         </Router>
     );
 }

@@ -2,7 +2,7 @@ version: "3"
 
 services:
   {db-container-name}:
-    image: postgres:14.2
+    image: {db-image}
     container_name: {db-container-name}
     hostname: {db-container-name}
     environment:

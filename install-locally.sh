@@ -1,37 +1,60 @@
 #!/bin/bash
 
-if [[ ! "${BASH_SOURCE[0]}" != "${0}" ]]; then
+CURRENT_SCRIPT_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+CREDENTIALS_PATH=$CURRENT_SCRIPT_PATH/credentials.txt
 
-   echo "script needs to be run with source as: 'source ${BASH_SOURCE[0]} ...'"
-   exit
+# Import helper function add_envs_from_file
+. "$CURRENT_SCRIPT_PATH/shell/lib/add_envs_from_file.sh"
 
-fi
+#if [[ ! "${BASH_SOURCE[0]}" != "${0}" ]]; then
+#
+#   echo "script needs to be run with source as: 'source ${BASH_SOURCE[0]} ...'"
+#   exit
+#
+#fi
 
 OS=$1
 case "$OS" in
        linux ) echo "Installing for linux";;
        mac ) echo "Installing for mac" && SED_FIX=.orginal;;
-       * ) echo "Need to provide argument for os type: linux | mac" && return;;
+       * ) echo "Need to provide argument for os type: linux | mac" && exit;;
 esac
 echo ""
 
 
-BASE_NAME=django_react_postgres
+#DOCKER_BASE_NAME=django_react_postgres
+#DB_PASS=secret
+#DB_PORT_EXTERNAL=5420
+add_envs_from_file "$CREDENTIALS_PATH" "DOCKER_BASE_NAME" "DB_IMAGE" "DB_PASS" "DB_PORT_EXTERNAL"
 
-DB_USER=django_react_postgres
-DB_PASS=secret
-DB_PORT_EXTERNAL=5420
+# Ensure base name has - instead of _ since docker anyway does this substitution on
+# creating a container
 
-# Should always be 5432
-DB_PORT_INTERNAL=5432
-DB_CONTAINER_NAME=${BASE_NAME}_db
+arrIN=(${DOCKER_BASE_NAME//_/ })
 
-DB_VOLUME_NAME_COMPOSE=db-14
-DB_VOLUME_NAME=${BASE_NAME}_${DB_VOLUME_NAME_COMPOSE}
+if [ "${#arrIN[@]}" -gt 1 ]; then
+    echo "DOCKER_BASE_NAME cant not contain underscore _ since. Please change to -"
+    echo "This is because docker makes this substitution anyway upon container and"
+    echo "volume creation"
+    exit
+fi
 
-DJANGO_SUPERUSER_PASSWORD=secret
-DJANGO_SUPERUSER_USERNAME=admin
-DJANGO_SUPERUSER_EMAIL=admin@mail.com
+#DOCKER_BASE_NAME=$(echo "$DOCKER_BASE_NAME" | sed -r 's/[_]+/-/g')
+
+DB_USER=${DOCKER_BASE_NAME}
+DB_CONTAINER_NAME=${DOCKER_BASE_NAME}_db
+
+# Split on .
+arrIN=(${DB_IMAGE//./ })
+
+# Pick out first element db image name + major version tag
+TMP=${arrIN[0]}
+
+# Create short and long name for db
+DB_VOLUME_NAME_COMPOSE=$(echo "$TMP" | sed -r 's/[:]+/-/g')
+DB_VOLUME_NAME_FULL=${DOCKER_BASE_NAME}_${DB_VOLUME_NAME_COMPOSE}
+
+echo $DB_VOLUME_NAME_COMPOSE $DB_IMAGE $DB_VOLUME_NAME_FULL
 
 # Docker network
 NETWORK=default-net
@@ -73,10 +96,9 @@ esac
 echo ""
 
 
+if [ -f "$CREDENTIALS_PATH" ]; then
 
-if [ -f conda-settings.txt ]; then
-
-   export $(cat conda-settings.txt | xargs)
+   add_envs_from_file "$CREDENTIALS_PATH" "CONDA_ENV_NAME" "CONDA_PYTHON_VERSION"
 
    TMP=$(conda env list | grep ".*${CONDA_ENV_NAME} .*")
 
@@ -85,8 +107,8 @@ if [ -f conda-settings.txt ]; then
        ./conda-create "$CONDA_ENV_NAME" "$CONDA_PYTHON_VERSION"
    fi
 
-   echo "Activating conda environment ..."
-   conda activate "$CONDA_ENV_NAME"
+#   echo "Activating conda environment ..."
+#   conda activate "$CONDA_ENV_NAME"
 else
 
   echo "conda-settings.txt missing, please create it"
@@ -95,25 +117,20 @@ else
 
 fi
 
-TMP=$(conda list | grep ".*django .*")
+TMP=$(conda list -n "$CONDA_ENV_NAME"  | grep ".*django .*")
 if [ -z "$TMP" ]; then
    echo "No django detected. Need to install requirements"
    read -p "Press enter to continue"
-   ./install-python-dependencies.sh;
+   ./install-python-dependencies.sh "$CONDA_ENV_NAME";
 else
   read -p "Install python packages (y/N)?" choice
   case "$choice" in
-         y|Y ) ./install-python-dependencies.sh;;
+         y|Y ) ./install-python-dependencies.sh "$CONDA_ENV_NAME";;
          n|N ) echo "Not installing";;
          * ) echo "Not installing";;
   esac
   echo ""
 fi
-
-echo "Install django superuser if it does not exist"
-read -p "Press enter to continue"
-python manage.py create_superuser_if_none_exists --user=$DJANGO_SUPERUSER_USERNAME --password=$DJANGO_SUPERUSER_PASSWORD --email=$DJANGO_SUPERUSER_EMAIL
-
 
 TMP=$(docker ps -a | grep ".* $DB_CONTAINER_NAME.*" | wc -l)
 
@@ -126,13 +143,14 @@ if [ "$TMP" = 1 ]; then
 fi
 
 
-TMP=$(docker volume ls | grep ".* $DB_VOLUME_NAME_COMPOSE.*")
+TMP=$(docker volume ls | grep ".* $DB_VOLUME_NAME_FULL.*")
+echo "$DB_VOLUME_NAME_COMPOSE $DB_VOLUME_NAME_FULL"
 if [[ -n $TMP ]]; then
 
-    echo "DB data volume $DB_VOLUME_NAME_COMPOSE exists"
+    echo "DB data volume $DB_VOLUME_NAME_FULL exists"
     read -p "Remove (y/N)?" choice
     case "$choice" in
-       y|Y ) echo "Remove db" && docker volume rm $DB_VOLUME_NAME_COMPOSE;;
+       y|Y ) echo "Remove db" && docker volume rm "$DB_VOLUME_NAME_FULL";;
        n|N ) echo "Keep db";;
        * ) echo "Keep db";;
     esac
@@ -152,15 +170,19 @@ fi
 echo "Generating db.docker-compose.yml"
 #echo "$SED_FIX"
 read -p "Press enter to continue"
+
+add_envs_from_file "$CREDENTIALS_PATH" "DB_IMAGE" "DB_PASS" "DB_PORT_EXTERNAL"
+
 echo ""
 cp sample.db.docker-compose.yml db.docker-compose.yml
+sed -i ${SED_FIX} "s/{db-container-name}/$DB_CONTAINER_NAME/g" db.docker-compose.yml
+sed -i ${SED_FIX} "s/{db-volume-name}/$DB_VOLUME_NAME_COMPOSE/g" db.docker-compose.yml
+sed -i ${SED_FIX} "s/{db-image}/$DB_IMAGE/g" db.docker-compose.yml
+sed -i ${SED_FIX} "s/{network}/$NETWORK/g" db.docker-compose.yml
 sed -i ${SED_FIX} "s/{postgres-user}/$DB_USER/g" db.docker-compose.yml
 sed -i ${SED_FIX} "s/{postgres-pass}/$DB_PASS/g" db.docker-compose.yml
 sed -i ${SED_FIX} "s/{postgres-port-external}/$DB_PORT_EXTERNAL/g" db.docker-compose.yml
-sed -i ${SED_FIX} "s/{postgres-port-internal}/$DB_PORT_INTERNAL/g" db.docker-compose.yml
-sed -i ${SED_FIX} "s/{network}/$NETWORK/g" db.docker-compose.yml
-sed -i ${SED_FIX} "s/{db-container-name}/$DB_CONTAINER_NAME/g" db.docker-compose.yml
-sed -i ${SED_FIX} "s/{db-volume-name}/$DB_VOLUME_NAME_COMPOSE/g" db.docker-compose.yml
+sed -i ${SED_FIX} "s/{postgres-port-internal}/5432/g" db.docker-compose.yml
 
 
 echo "Generating volume.docker-compose.yml"
@@ -187,23 +209,27 @@ if [ -f .env ]; then
    read -p "Remove (y/N)?" choice
    case "$choice" in
            y|Y ) rm -f .env;;
-           n|N ) echo "Not installing";;
-           * ) echo "Not installing";;
+           n|N ) echo "Not removing";;
+           * ) echo "Not removing";;
    esac
    echo ""
 fi
 
 if [ ! -f .env ]; then
 
-   DJANGO_SECRET_KEY=$(tr -dc 'a-z0-9!@#$%^&*(-_=+)' < /dev/urandom | head -c50)
+   add_envs_from_file "$CREDENTIALS_PATH" "CONDA_PYTHON_PATH"
 
+   DJANGO_SECRET_KEY=$(tr -dc 'a-z0-9!@#$%^&*(-_=+)' < /dev/urandom | head -c50)
+#   DJANGO_SECRET_KEY=$(echo "$DJANGO_SECRET_KEY" | sed -r 's#[/]+#\\/#g')
+#   DJANGO_SECRET_KEY=$(echo "$DJANGO_SECRET_KEY" | sed -r 's#[/]+#\\!#g')
    echo "DJANGO_SECRET_KEY: $DJANGO_SECRET_KEY"
 
    echo "Create .env"
    read -p "Press enter to continue"
    echo ""
    cp sample.env .env
-   sed -i ${SED_FIX} "s/{django-secret-key}/\"$DJANGO_SECRET_KEY\"/g" .env
+   sed -i ${SED_FIX} "s|{conda-python-path}|$CONDA_PYTHON_PATH|g" .env
+   sed -i ${SED_FIX} "s|{django-secret-key}|\'$DJANGO_SECRET_KEY\'|g" .env
    sed -i ${SED_FIX} "s/{db-user}/$DB_USER/g" .env
    sed -i ${SED_FIX} "s/{db-name}/$DB_USER/g" .env
    sed -i ${SED_FIX} "s/{db-pass}/$DB_PASS/g" .env
@@ -227,8 +253,25 @@ read -p "Press enter to continue"
 echo ""
 docker-compose up -d
 
-DB_DOCKER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $DB_CONTAINER_NAME)
+echo "Wait 10 sec for db to start"
+sleep 10
 
+add_envs_from_file "$CREDENTIALS_PATH" "CONDA_PYTHON_PATH" "DJANGO_SUPERUSER_USERNAME" "DJANGO_SUPERUSER_PASSWORD" "DJANGO_SUPERUSER_EMAIL"
+
+TMP=$($CONDA_PYTHON_PATH manage.py migrate --check | grep ".* No migrations to apply.*" | wc -l)
+if [ "$TMP" = 0 ]; then
+  echo "Migrate django db"
+  read -p "Press enter to continue"
+  $CONDA_PYTHON_PATH manage.py migrate
+fi
+
+echo "Install django superuser if it does not exist"
+read -p "Press enter to continue"
+
+"$CONDA_PYTHON_PATH" manage.py create_superuser_if_none_exists --user=$DJANGO_SUPERUSER_USERNAME --password=$DJANGO_SUPERUSER_PASSWORD --email=$DJANGO_SUPERUSER_EMAIL
+
+
+DB_DOCKER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $DB_CONTAINER_NAME)
 
 export $(cat .env | xargs)
 
@@ -239,16 +282,21 @@ echo "  Django"
 echo "  ************"
 echo "  Secret key: $DJANGO_SECRET_KEY"
 echo ""
-echo "  Password: $PGADMIN_PASS"
+echo "  Django superuser: $DJANGO_SUPERUSER_USERNAME"
+echo "  Django superuser email: $DJANGO_SUPERUSER_EMAIL"
+echo "  Django superuser password: $DJANGO_SUPERUSER_PASSWORD"
 echo ""
 echo "  ********************"
 echo "  Db credentials"
 echo "  ********************"
-echo "  Host: $DB_HOST"
-echo "  Host ip: $DB_DOCKER_IP (can change when docker service restarts)"
+echo "  Host external: $DB_HOST (use when connecting from outside container)"
+echo "  Host internal: $DB_VOLUME_NAME_FULL (use when connecting from another container on the same docker network)"
+echo "  Host internal ip: $DB_DOCKER_IP (can change when docker service restarts)"
 echo "  Name: $DB_NAME"
 echo "  Port: $DB_PORT"
-echo "  Maintenace database: $DB_USER"
+echo "  Maintenance database: $DB_USER"
 echo "  Username: $DB_USER"
 echo "  Password: $DB_PASS"
 echo ""
+echo "  Connect from docker host os to db container with localhost and from"
+echo "  another container on the same docker network with $DB_HOST"

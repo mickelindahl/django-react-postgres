@@ -67,7 +67,7 @@ function reactBundle() {
         .pipe(
             webpack(webpackConfig)
         )
-        .pipe(dest('build/'));
+        .pipe(dest('build/js/'));
 }
 
 function openBrowserIfNotActive(cb) {
@@ -82,13 +82,14 @@ function openBrowserIfNotActive(cb) {
     cb()
 }
 
-function liveUpdate() {
+function liveUpdate(cb) {
     console.log('Watch')
-    watch('frontend-react/resources/fonts/**/*', fonts)
-    watch('frontend-react/resources/images/**/*', images)
+    // watch('frontend-react/resources/fonts/**/*', fonts)
+    // watch('frontend-react/resources/images/**/*', images)
     watch('frontend-react/resources/styles/**/*.scss', transpileStyles)
     // watch('frontend-react/resources/js/**/*.js', bundleJs)
     watch('**/templates/**/*.html').on('change', browserSync.reload);
+    cb()
 }
 
 // gulp.task('fonts', gulp.series())
@@ -104,11 +105,13 @@ function liveUpdate() {
 
 exports.default = series(
         parallel(
-            // fonts, images, favicon,
+            // fonts, images,
+            favicon,
             transpileStyles,
             //bundleJs,
             reactBundle),
-        // openBrowserIfNotActive
+        liveUpdate,
+        openBrowserIfNotActive
     )
 // function (cb) {
 //

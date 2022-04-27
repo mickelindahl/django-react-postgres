@@ -9,6 +9,6 @@ if [[ ! "${BASH_SOURCE[0]}" != "${0}" ]]; then
 
 fi
 
-export $(cat .conda_env | xargs)
+export $(cat conda-settings.txt | xargs)
 
-conda activate $NAME
+conda activate $CONDA_ENV_NAME

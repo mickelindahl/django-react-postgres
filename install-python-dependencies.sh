@@ -1,4 +1,7 @@
 #!/bin/bash
 
-conda install -c anaconda django
-conda install -c conda-forge python-dotenv
+CONDA_ENV_NAME=$1
+
+conda install -y -n "$CONDA_ENV_NAME" -c anaconda django
+conda install -y -n "$CONDA_ENV_NAME" -c conda-forge python-dotenv
+conda install -y -n "$CONDA_ENV_NAME" -c anaconda requests

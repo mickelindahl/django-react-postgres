@@ -31,15 +31,17 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # Application definition
-
+# To ensure that the template from your 'account' ( registration/logged_out.html)
+# app, is used, make sure it is above 'django.contrib.admin' in your INSTALLED_APPS
+# setting.
 INSTALLED_APPS = [
+    'server',  # Important to have it first to register registration/logged_out.html template
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'server'
 ]
 
 MIDDLEWARE = [
@@ -116,6 +118,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
+
+LOGIN_REDIRECT_URL = '/'
 
 TIME_ZONE = 'UTC'
 

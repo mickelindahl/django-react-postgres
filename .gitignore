@@ -2,7 +2,6 @@
 .idea
 
 # Envs
-.conda_env
 credentials.txt
 .env
 conda-settings.txt

@@ -12,6 +12,3 @@ if [ -z $2 ]; then
 fi
 
 conda create --name $1 python=$2
-
-echo "NAME=$1" > .conda_env
-echo "PYTHON_VERSION=$2" >> .conda_env

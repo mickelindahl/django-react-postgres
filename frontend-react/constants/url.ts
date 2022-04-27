@@ -1,3 +1,3 @@
 export default {
-    APP_BASE: "/customers/config"
+    APP_BASE: ""
 }

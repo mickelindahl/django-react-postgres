@@ -15,9 +15,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
+from django.contrib.auth import views as auth_views
+from . import views
 
 urlpatterns = [
+
+    path('', views.app, name='main'),
+    # path(r'^login/$', auth_views.LoginView, name='login'),
+    # path(r'^logout/$', auth_views.auth_logout, name='logout'),
     # Add Django site authentication urls (for login, logout, password management)
     path('accounts/', include('django.contrib.auth.urls')),
     # Note: Using the above method adds the following URLs with names in square brackets, which can be used to reverse
@@ -37,4 +42,6 @@ urlpatterns = [
     # directory /registration/ somewhere in the templates search path.
 
     path('admin/', admin.site.urls),
+    # re_path('', views.app, name='main'),
+
 ]

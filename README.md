@@ -16,5 +16,13 @@ Then run
 . ./install-locally.sh
 ```
 
+## Django PyCharm
+
+To setup support for Djnago in PyCharm go to 
+
+`File | Settings | Languages & Frameworks | Django for Windows and Linux`
+
+And fill in paths
+
 
 
