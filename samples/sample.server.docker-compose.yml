@@ -1,0 +1,25 @@
+  {server-container-name}:
+    build: 
+      context: .
+      args:
+        CONDA_ENV_NAME: django-react-postgres
+        CONDA_BASE_PATH: /opt/conda
+    image: {image-name}:{image-tag}
+    container_name: {server-container-name}
+#    entrypoint: ./entrypoint
+
+    environment:
+        VIRTUAL_HOST: {virtual-host}
+    ports:
+      - "8001:8000"
+#    expose:
+#      - "2000"
+    links:
+      - {db-container-name}
+    tty: true
+    restart: always
+    command: npm start
+    volumes:
+      - {server-volume-name}:/home/app/storage
+    networks:
+      - {network}

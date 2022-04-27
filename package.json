@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start-prod": "export NODE_ENV=production && (gulp & python3 manage.py runserver)",
-    "start-dev": "gulp & ./scripts/start-django.sh",
-    "start": "gulp & ./scripts/start-django.sh",
+    "start-dev": "gulp & ./shell/scripts/start-django.sh",
+    "start": "gulp & ./shell/scripts/start-django.sh",
     "django": ". ./scripts/start-django.sh",
     "gulp": "gulp"
   },

@@ -1,0 +1,4 @@
+volumes:
+  {db-volume}
+  {server-volume}
+

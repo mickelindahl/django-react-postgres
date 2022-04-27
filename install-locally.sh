@@ -2,6 +2,8 @@
 
 CURRENT_SCRIPT_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 CREDENTIALS_PATH=$CURRENT_SCRIPT_PATH/credentials.txt
+DOCKER_COMPOSE_FILE=local.docker-compose.yml
+SAMPLES_PATH=samples
 
 # Import helper function add_envs_from_file
 . "$CURRENT_SCRIPT_PATH/shell/lib/add_envs_from_file.sh"
@@ -21,14 +23,7 @@ case "$OS" in
 esac
 echo ""
 
-
-#DOCKER_BASE_NAME=django_react_postgres
-#DB_PASS=secret
-#DB_PORT_EXTERNAL=5420
 add_envs_from_file "$CREDENTIALS_PATH" "DOCKER_BASE_NAME" "DB_IMAGE" "DB_PASS" "DB_PORT_EXTERNAL"
-
-# Ensure base name has - instead of _ since docker anyway does this substitution on
-# creating a container
 
 arrIN=(${DOCKER_BASE_NAME//_/ })
 
@@ -39,10 +34,8 @@ if [ "${#arrIN[@]}" -gt 1 ]; then
     exit
 fi
 
-#DOCKER_BASE_NAME=$(echo "$DOCKER_BASE_NAME" | sed -r 's/[_]+/-/g')
-
-DB_USER=${DOCKER_BASE_NAME}
-DB_CONTAINER_NAME=${DOCKER_BASE_NAME}_db
+DB_USER=${DOCKER_BASE_NAME}-local
+DB_CONTAINER_NAME=${DOCKER_BASE_NAME}-local-db
 
 # Split on .
 arrIN=(${DB_IMAGE//./ })
@@ -50,11 +43,13 @@ arrIN=(${DB_IMAGE//./ })
 # Pick out first element db image name + major version tag
 TMP=${arrIN[0]}
 
-# Create short and long name for db
-DB_VOLUME_NAME_COMPOSE=$(echo "$TMP" | sed -r 's/[:]+/-/g')
+# Create short and long name for db. When compose
+DB_VOLUME_NAME_COMPOSE=local-$(echo "$TMP" | sed -r 's/[:]+/-/g')
 DB_VOLUME_NAME_FULL=${DOCKER_BASE_NAME}_${DB_VOLUME_NAME_COMPOSE}
 
-echo $DB_VOLUME_NAME_COMPOSE $DB_IMAGE $DB_VOLUME_NAME_FULL
+# Conda
+add_envs_from_file "$CREDENTIALS_PATH" "CONDA_ENV_NAME" "CONDA_PATH"
+CONDA_PYTHON_PATH=$CONDA_PATH/envs/$CONDA_ENV_NAME/bin/python
 
 # Docker network
 NETWORK=default-net
@@ -107,8 +102,6 @@ if [ -f "$CREDENTIALS_PATH" ]; then
        ./conda-create "$CONDA_ENV_NAME" "$CONDA_PYTHON_VERSION"
    fi
 
-#   echo "Activating conda environment ..."
-#   conda activate "$CONDA_ENV_NAME"
 else
 
   echo "conda-settings.txt missing, please create it"
@@ -135,16 +128,15 @@ fi
 TMP=$(docker ps -a | grep ".* $DB_CONTAINER_NAME.*" | wc -l)
 
 if [ "$TMP" = 1 ]; then
-    echo "Remove previous postgres container  $DB_CONTAINER_NAME"
+    echo "Stop and remove previous postgres container  $DB_CONTAINER_NAME"
     read -p "Press enter to continue"
     echo ""
-    docker-compose stop
-    docker-compose rm -f
+    docker-compose --file $DOCKER_COMPOSE_FILE stop
+    docker-compose --file $DOCKER_COMPOSE_FILE rm -f
 fi
 
 
 TMP=$(docker volume ls | grep ".* $DB_VOLUME_NAME_FULL.*")
-echo "$DB_VOLUME_NAME_COMPOSE $DB_VOLUME_NAME_FULL"
 if [[ -n $TMP ]]; then
 
     echo "DB data volume $DB_VOLUME_NAME_FULL exists"
@@ -174,7 +166,7 @@ read -p "Press enter to continue"
 add_envs_from_file "$CREDENTIALS_PATH" "DB_IMAGE" "DB_PASS" "DB_PORT_EXTERNAL"
 
 echo ""
-cp sample.db.docker-compose.yml db.docker-compose.yml
+cp $SAMPLES_PATH/sample.db.docker-compose.yml db.docker-compose.yml
 sed -i ${SED_FIX} "s/{db-container-name}/$DB_CONTAINER_NAME/g" db.docker-compose.yml
 sed -i ${SED_FIX} "s/{db-volume-name}/$DB_VOLUME_NAME_COMPOSE/g" db.docker-compose.yml
 sed -i ${SED_FIX} "s/{db-image}/$DB_IMAGE/g" db.docker-compose.yml
@@ -188,14 +180,14 @@ sed -i ${SED_FIX} "s/{postgres-port-internal}/5432/g" db.docker-compose.yml
 echo "Generating volume.docker-compose.yml"
 read -p "Press enter to continue"
 echo ""
-cp sample.volumes.docker-compose.yml volumes.docker-compose.yml
-sed -i ${SED_FIX} "s/{db-volume-name}/$DB_VOLUME_NAME_COMPOSE/g" volumes.docker-compose.yml
-
+cp $SAMPLES_PATH/sample.volumes.docker-compose.yml volumes.docker-compose.yml
+sed -i ${SED_FIX} "s/{db-volume}/$DB_VOLUME_NAME_COMPOSE:/g" volumes.docker-compose.yml
+sed -i ${SED_FIX} "s/{server-volume}//g" volumes.docker-compose.yml
 
 echo "Generating network.docker-compose.yml"
 read -p "Press enter to continue"
 echo ""
-cp sample.network.docker-compose.yml network.docker-compose.yml
+cp $SAMPLES_PATH/sample.network.docker-compose.yml network.docker-compose.yml
 sed -i ${SED_FIX} "s/{network}/$NETWORK/g" network.docker-compose.yml
 
 if [ "$OS" = "mac" ]; then
@@ -217,24 +209,19 @@ fi
 
 if [ ! -f .env ]; then
 
-   add_envs_from_file "$CREDENTIALS_PATH" "CONDA_PYTHON_PATH"
-
-   DJANGO_SECRET_KEY=$(tr -dc 'a-z0-9!@#$%^&*(-_=+)' < /dev/urandom | head -c50)
-#   DJANGO_SECRET_KEY=$(echo "$DJANGO_SECRET_KEY" | sed -r 's#[/]+#\\/#g')
-#   DJANGO_SECRET_KEY=$(echo "$DJANGO_SECRET_KEY" | sed -r 's#[/]+#\\!#g')
-   echo "DJANGO_SECRET_KEY: $DJANGO_SECRET_KEY"
+   add_envs_from_file "$CREDENTIALS_PATH" "DB_HOST" "DB_PASS" "DB_PORT_EXTERNAL" "DJANGO_SECRET_KEY"
 
    echo "Create .env"
    read -p "Press enter to continue"
    echo ""
-   cp sample.env .env
+   cp $SAMPLES_PATH/sample.env .env
    sed -i ${SED_FIX} "s|{conda-python-path}|$CONDA_PYTHON_PATH|g" .env
    sed -i ${SED_FIX} "s|{django-secret-key}|\'$DJANGO_SECRET_KEY\'|g" .env
    sed -i ${SED_FIX} "s/{db-user}/$DB_USER/g" .env
    sed -i ${SED_FIX} "s/{db-name}/$DB_USER/g" .env
    sed -i ${SED_FIX} "s/{db-pass}/$DB_PASS/g" .env
    sed -i ${SED_FIX} "s/{db-port}/$DB_PORT_EXTERNAL/g" .env
-   sed -i ${SED_FIX} "s/{db-host}/localhost/g" .env
+   sed -i ${SED_FIX} "s/{db-host}/$DB_HOST/g" .env
 
 
    if [[ (-f .env${SED_FIX}) && ( ! "$SED_FIX" = "" ) ]]; then
@@ -243,20 +230,24 @@ if [ ! -f .env ]; then
    fi
 fi
 
-echo "Generate docker-compose.yml"
+echo "Generate local.docker-compose.yml"
 read -p "Press enter to continue"
 echo ""
-cat db.docker-compose.yml network.docker-compose.yml volumes.docker-compose.yml > docker-compose.yml
+cat sample.pre.docker-compose.yml db.docker-compose.yml network.docker-compose.yml volumes.docker-compose.yml > local.docker-compose.yml
+
+echo "Removing staging files db.docker-compose.yml network.docker-compose.yml volumes.docker-compose.yml"
+echo ""
+rm db.docker-compose.yml network.docker-compose.yml volumes.docker-compose.yml
 
 echo "Install db docker container $DB_CONTAINER_NAME"
 read -p "Press enter to continue"
 echo ""
-docker-compose up -d
+docker-compose --file $DOCKER_COMPOSE_FILE up -d
 
 echo "Wait 10 sec for db to start"
 sleep 10
 
-add_envs_from_file "$CREDENTIALS_PATH" "CONDA_PYTHON_PATH" "DJANGO_SUPERUSER_USERNAME" "DJANGO_SUPERUSER_PASSWORD" "DJANGO_SUPERUSER_EMAIL"
+add_envs_from_file "$CREDENTIALS_PATH" "DJANGO_SUPERUSER_USERNAME" "DJANGO_SUPERUSER_PASSWORD" "DJANGO_SUPERUSER_EMAIL"
 
 TMP=$($CONDA_PYTHON_PATH manage.py migrate --check | grep ".* No migrations to apply.*" | wc -l)
 if [ "$TMP" = 0 ]; then
@@ -290,7 +281,7 @@ echo "  ********************"
 echo "  Db credentials"
 echo "  ********************"
 echo "  Host external: $DB_HOST (use when connecting from outside container)"
-echo "  Host internal: $DB_VOLUME_NAME_FULL (use when connecting from another container on the same docker network)"
+echo "  Host internal: $DB_CONTAINER_NAME (use when connecting from another container on the same docker network e.g. from pgadmin4)"
 echo "  Host internal ip: $DB_DOCKER_IP (can change when docker service restarts)"
 echo "  Name: $DB_NAME"
 echo "  Port: $DB_PORT"

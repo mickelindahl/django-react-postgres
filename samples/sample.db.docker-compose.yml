@@ -1,6 +1,3 @@
-version: "3"
-
-services:
   {db-container-name}:
     image: {db-image}
     container_name: {db-container-name}
@@ -16,4 +13,3 @@ services:
         - {db-volume-name}:/var/lib/postgresql/data
     networks:
       - {network}
-

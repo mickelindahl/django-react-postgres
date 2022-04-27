@@ -14,4 +14,4 @@ fi
 #conda activate "$CONDA_ENV_NAME"
 #cd $CURRENT
 #
-$CONDA_PYTHON_PATH manage.py runserver
+$CONDA_PYTHON_PATH manage.py runserver 0.0.0.0:8000
