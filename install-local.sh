@@ -1,8 +1,9 @@
 #!/bin/bash
 
 CURRENT_SCRIPT_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-CREDENTIALS_PATH=$CURRENT_SCRIPT_PATH/credentials.txt
+CREDENTIALS_PATH=$CURRENT_SCRIPT_PATH/credentials-local.txt
 DOCKER_COMPOSE_FILE=local.docker-compose.yml
+
 SAMPLES_PATH=samples
 
 # Import helper function add_envs_from_file
@@ -34,8 +35,10 @@ if [ "${#arrIN[@]}" -gt 1 ]; then
     exit
 fi
 
+
 DB_USER=${DOCKER_BASE_NAME}-local
 DB_CONTAINER_NAME=${DOCKER_BASE_NAME}-local-db
+DOCKER_PROJECT=${DOCKER_BASE_NAME}-local
 
 # Split on .
 arrIN=(${DB_IMAGE//./ })
@@ -44,12 +47,14 @@ arrIN=(${DB_IMAGE//./ })
 TMP=${arrIN[0]}
 
 # Create short and long name for db. When compose
-DB_VOLUME_NAME_COMPOSE=local-$(echo "$TMP" | sed -r 's/[:]+/-/g')
-DB_VOLUME_NAME_FULL=${DOCKER_BASE_NAME}_${DB_VOLUME_NAME_COMPOSE}
+DB_VOLUME_NAME_COMPOSE=$(echo "$TMP" | sed -r 's/[:]+/-/g')
+DB_VOLUME_NAME_FULL=${DOCKER_PROJECT}_${DB_VOLUME_NAME_COMPOSE}
+
+
 
 # Conda
-add_envs_from_file "$CREDENTIALS_PATH" "CONDA_ENV_NAME" "CONDA_PATH"
-CONDA_PYTHON_PATH=$CONDA_PATH/envs/$CONDA_ENV_NAME/bin/python
+add_envs_from_file "$CREDENTIALS_PATH" "CONDA_ENV_NAME" "CONDA_BASE_PATH"
+CONDA_PYTHON_PATH=$CONDA_BASE_PATH/envs/$CONDA_ENV_NAME/bin/python
 
 # Docker network
 NETWORK=default-net
@@ -131,8 +136,8 @@ if [ "$TMP" = 1 ]; then
     echo "Stop and remove previous postgres container  $DB_CONTAINER_NAME"
     read -p "Press enter to continue"
     echo ""
-    docker-compose --file $DOCKER_COMPOSE_FILE stop
-    docker-compose --file $DOCKER_COMPOSE_FILE rm -f
+    docker-compose --file $DOCKER_COMPOSE_FILE -p "$DOCKER_PROJECT" stop
+    docker-compose --file $DOCKER_COMPOSE_FILE -p "$DOCKER_PROJECT" rm -f
 fi
 
 
@@ -209,20 +214,21 @@ fi
 
 if [ ! -f .env ]; then
 
-   add_envs_from_file "$CREDENTIALS_PATH" "DB_HOST" "DB_PASS" "DB_PORT_EXTERNAL" "DJANGO_SECRET_KEY"
+   add_envs_from_file "$CREDENTIALS_PATH" "DJANGO_ALLOWED_HOSTS" "DJANGO_STORAGE_PATH" "DB_HOST" "DB_PASS" "DB_PORT_EXTERNAL" "DJANGO_SECRET_KEY"
 
    echo "Create .env"
    read -p "Press enter to continue"
    echo ""
    cp $SAMPLES_PATH/sample.env .env
    sed -i ${SED_FIX} "s|{conda-python-path}|$CONDA_PYTHON_PATH|g" .env
+   sed -i ${SED_FIX} "s|{django-allowed-hosts}|$DJANGO_ALLOWED_HOSTS|g" .env
    sed -i ${SED_FIX} "s|{django-secret-key}|\'$DJANGO_SECRET_KEY\'|g" .env
+   sed -i ${SED_FIX} "s|{django-storage-path}|$DJANGO_STORAGE_PATH|g" .env
    sed -i ${SED_FIX} "s/{db-user}/$DB_USER/g" .env
    sed -i ${SED_FIX} "s/{db-name}/$DB_USER/g" .env
    sed -i ${SED_FIX} "s/{db-pass}/$DB_PASS/g" .env
    sed -i ${SED_FIX} "s/{db-port}/$DB_PORT_EXTERNAL/g" .env
    sed -i ${SED_FIX} "s/{db-host}/$DB_HOST/g" .env
-
 
    if [[ (-f .env${SED_FIX}) && ( ! "$SED_FIX" = "" ) ]]; then
 
@@ -233,7 +239,7 @@ fi
 echo "Generate local.docker-compose.yml"
 read -p "Press enter to continue"
 echo ""
-cat sample.pre.docker-compose.yml db.docker-compose.yml network.docker-compose.yml volumes.docker-compose.yml > local.docker-compose.yml
+cat $SAMPLES_PATH/sample.pre.docker-compose.yml db.docker-compose.yml network.docker-compose.yml volumes.docker-compose.yml > local.docker-compose.yml
 
 echo "Removing staging files db.docker-compose.yml network.docker-compose.yml volumes.docker-compose.yml"
 echo ""
@@ -242,7 +248,7 @@ rm db.docker-compose.yml network.docker-compose.yml volumes.docker-compose.yml
 echo "Install db docker container $DB_CONTAINER_NAME"
 read -p "Press enter to continue"
 echo ""
-docker-compose --file $DOCKER_COMPOSE_FILE up -d
+docker-compose --file $DOCKER_COMPOSE_FILE -p "$DOCKER_PROJECT" up -d
 
 echo "Wait 10 sec for db to start"
 sleep 10
@@ -291,3 +297,5 @@ echo "  Password: $DB_PASS"
 echo ""
 echo "  Connect from docker host os to db container with localhost and from"
 echo "  another container on the same docker network with $DB_HOST"
+echo ""
+echo "To start server run 'npm start'"

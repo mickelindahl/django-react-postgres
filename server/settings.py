@@ -28,7 +28,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',')  # []
 
 # Application definition
 # To ensure that the template from your 'account' ( registration/logged_out.html)
@@ -77,14 +77,14 @@ WSGI_APPLICATION = 'server.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-db_setup={
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASS'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
-    }
+db_setup = {
+    'ENGINE': 'django.db.backends.postgresql',
+    'NAME': os.getenv('DB_NAME'),
+    'USER': os.getenv('DB_USER'),
+    'PASSWORD': os.getenv('DB_PASS'),
+    'HOST': os.getenv('DB_HOST'),
+    'PORT': os.getenv('DB_PORT'),
+}
 
 # print('db_setup', db_setup)
 
@@ -139,5 +139,10 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "build"),
 ]
 
-print( os.path.join(BASE_DIR, "build"))
+MEDIA_ROOT = os.getenv('DJANGO_STORAGE_PATH', os.getcwd()) + '/media/'
 
+os.makedirs(MEDIA_ROOT, exist_ok=True)
+
+print('MEDIA_ROOT', MEDIA_ROOT)
+
+MEDIA_URL = '/media/'

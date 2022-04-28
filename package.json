@@ -5,11 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start-prod": "export NODE_ENV=production && (gulp & python3 manage.py runserver)",
-    "start-dev": "gulp & ./shell/scripts/start-django.sh",
-    "start": "gulp & ./shell/scripts/start-django.sh",
-    "django": ". ./scripts/start-django.sh",
-    "gulp": "gulp"
+    "start": "gulp & ./shell/scripts/start-django.sh"
   },
   "author": "Mikae Lindahl",
   "license": "ISC",
@@ -39,6 +35,7 @@
     "style-loader": "^3.3.1",
     "ts-loader": "^9.2.8",
     "typescript": "^4.6.3",
+    "typescript-plugin-css-modules": "^3.4.0",
     "webpack": "^5.72.0",
     "webpack-stream": "^7.0.0"
   }

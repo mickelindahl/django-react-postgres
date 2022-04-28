@@ -7,18 +7,9 @@
 import React from "react";
 import {BrowserRouter as Router, Routes, Route} from "react-router-dom";
 import url from "../constants/url";
+import Home from "../pages/Home"
 
 const debug = require('debug')('bk-manager:frontend-react:routers:RoutingApp');
-
-function Home() {
-
-    return (
-        <div className={'container'}>
-            <h1>Home</h1>
-            <p>Hello World</p>
-        </div>
-    )
-}
 
 /**
  * Main routing for the app

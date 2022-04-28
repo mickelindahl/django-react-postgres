@@ -47,13 +47,15 @@ USER app
 ADD package.json $HOME/package.json
 ADD package-lock.json $HOME/package-lock.json
 
-# Install packages
+# Install packages and add aliases
 RUN  mkdir -p $HOME/src && \
      mkdir -p $HOME/storage && \
      cp $HOME/package.json $HOME/src/package.json && \
      cp $HOME/package-lock.json $HOME/src/package-lock.json && \
      cd $HOME/src && \
-     npm install
+     npm install && \
+     echo 'alias ll="ls -la"' > $HOME/.bash_aliases
+
 
 ADD .env-tmp $HOME/src/.env
 ADD gulpfile.js manage.py tsconfig.json webpack.js $HOME/src/

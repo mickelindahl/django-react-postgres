@@ -6,20 +6,18 @@
         CONDA_BASE_PATH: /opt/conda
     image: {image-name}:{image-tag}
     container_name: {server-container-name}
-#    entrypoint: ./entrypoint
-
     environment:
         VIRTUAL_HOST: {virtual-host}
     ports:
       - "8001:8000"
-#    expose:
-#      - "2000"
+    expose:
+      - "8000"  # Needed for reverse proxy with virtual host
     links:
       - {db-container-name}
     tty: true
     restart: always
     command: npm start
     volumes:
-      - {server-volume-name}:/home/app/storage
+      - {server-volume-name}:{django-storage-path}
     networks:
       - {network}

@@ -46,17 +46,20 @@ SERVER_VOLUME_NAME=${DOCKER_BASE_NAME}_$SERVER_VOLUME_NAME
 
 echo "Generating server.docker-compose.yml"
 echo ""
-add_envs_from_file "$CREDENTIALS_PATH" "CONDA_ENV_NAME" "CONDA_BASE_PATH" "DB_IMAGE" "DB_PASS" "DB_PORT_EXTERNAL" "VIRTUAL_HOST"
+add_envs_from_file "$CREDENTIALS_PATH" "CONDA_ENV_NAME" "CONDA_BASE_PATH" "DJANGO_STORAGE_PATH" "VIRTUAL_HOST"
 cp $SAMPLES_PATH/sample.server.docker-compose.yml server.docker-compose.yml
 sed -i "s/{conda-env-name}/$CONDA_ENV_NAME/g" server.docker-compose.yml
 sed -i "s|{conda-base-path}|$CONDA_BASE_PATH|g" server.docker-compose.yml
 sed -i "s/{db-container-name}/$DB_CONTAINER_NAME/g" server.docker-compose.yml
+sed -i "s|{django-storage-path}|$DJANGO_STORAGE_PATH|g" server.docker-compose.yml
 sed -i "s/{image-name}/$SERVER_CONTAINER_NAME/g" server.docker-compose.yml
 sed -i "s/{image-tag}/latest/g" server.docker-compose.yml
 sed -i "s/{network}/$NETWORK/g" server.docker-compose.yml
 sed -i "s/{server-container-name}/$SERVER_CONTAINER_NAME/g" server.docker-compose.yml
 sed -i "s/{server-volume-name}/$SERVER_VOLUME_NAME_COMPOSE/g" server.docker-compose.yml
 sed -i "s/{virtual-host}/$VIRTUAL_HOST/g" server.docker-compose.yml
+
+
 
 echo "Generating db.docker-compose.yml"
 echo ""
@@ -95,12 +98,14 @@ echo ""
 rm server.docker-compose.yml db.docker-compose.yml network.docker-compose.yml volumes.docker-compose.yml
 
 
-echo "Create .env-server"
+echo "Create .env-tmp"
 echo ""
-add_envs_from_file "$CREDENTIALS_PATH" "CONDA_PYTHON_PATH" "DB_HOST" "DB_PASS" "DB_PORT_EXTERNAL" "DJANGO_SECRET_KEY"
+add_envs_from_file "$CREDENTIALS_PATH" "CONDA_PYTHON_PATH" "DJANGO_ALLOWED_HOSTS" "DJANGO_STORAGE_PATH" "DB_HOST" "DB_PASS" "DB_PORT_EXTERNAL" "DJANGO_SECRET_KEY"
 cp $SAMPLES_PATH/sample.env .env-tmp
 sed -i "s|{conda-python-path}|$CONDA_PYTHON_PATH|g" .env-tmp
+sed -i "s|{django-allowed-hosts}|$DJANGO_ALLOWED_HOSTS|g" .env-tmp
 sed -i "s|{django-secret-key}|\'$DJANGO_SECRET_KEY\'|g" .env-tmp
+sed -i "s|{django-storage-path}|$DJANGO_STORAGE_PATH|g" .env-tmp
 sed -i "s/{db-user}/$DB_USER/g" .env-tmp
 sed -i "s/{db-name}/$DB_USER/g" .env-tmp
 sed -i "s/{db-pass}/$DB_PASS/g" .env-tmp
