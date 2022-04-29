@@ -146,3 +146,5 @@ os.makedirs(MEDIA_ROOT, exist_ok=True)
 print('MEDIA_ROOT', MEDIA_ROOT)
 
 MEDIA_URL = '/media/'
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'

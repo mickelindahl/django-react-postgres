@@ -22,9 +22,12 @@ function images() {
 }
 
 function favicon() {
+
+    console.log('favicon')
+
     return src([
-        'resources/favicon/*'
-    ]).pipe(dest('build'))
+        'frontend-react/resources/favicon/*'
+    ]).pipe(dest('build/'))
 }
 
 function transpileStyles() {
@@ -62,18 +65,24 @@ function bundleJs() {
         .pipe(browserSync.stream())
 }
 
-function reactBundle() {
-    return src('frontend-react/app.tsx')
+function reactBundle(cb) {
+    src('frontend-react/app.tsx')
         .pipe(
             webpack(webpackConfig)
         )
-        .pipe(dest('build/js/'));
+        .pipe(dest('build/js/'))
+        .pipe(browserSync.stream())
+
+    cb()
 }
 
 function openBrowserIfNotActive(cb) {
     if (browserSync.active) {
+        console.log('openBrowserIfNotActive active')
         browserSync.exit();
     } else {
+
+        console.log('openBrowserIfNotActive open')
         browserSync.init({
             proxy: 'localhost:8000',
             port: '2998'
@@ -103,16 +112,24 @@ function liveUpdate(cb) {
 // gulp.task('watch', gulp.series('browserSync',));
 // gulp.task('default', gulp.series('build', 'watch'));
 
+function clean(cb) {
+    console.log('Clean!!!')
+    cb();
+}
+
 exports.default = series(
-        parallel(
-            // fonts, images,
-            favicon,
-            transpileStyles,
-            //bundleJs,
-            reactBundle),
-        liveUpdate,
-        openBrowserIfNotActive
-    )
+    // clean,
+    parallel(
+        // fonts, images,
+        images,
+        favicon,
+        transpileStyles,
+        reactBundle
+        //bundleJs,
+    ),
+    liveUpdate,
+    openBrowserIfNotActive,
+)
 // function (cb) {
 //
 //     liveUpdate()

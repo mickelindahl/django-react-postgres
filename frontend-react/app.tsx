@@ -2,6 +2,10 @@ import React from "react";
 import { createRoot } from 'react-dom/client';
 import RoutingApp from "./routers/RoutingApp";
 import enableDebug from "./lib/enableDebug";
+import store from './redux/store'
+import DataProvider from "./components/DataProvider";
+import { Provider } from 'react-redux'
+import url from "./constants/url"
 
 enableDebug();
 
@@ -13,7 +17,7 @@ enableDebug();
  */
 const App = () => {
 
-    return <RoutingApp/>
+    return <DataProvider endpoint={url.APP_STATE} render={()=><RoutingApp/>}/>
 };
 
 // const wrapper = document.getElementById("app");
@@ -22,7 +26,11 @@ const App = () => {
 const container = document.getElementById('app');
 if(container){
   const root = createRoot(container!); // createRoot(container!) if you use TypeScript
-root.render(<App/>);
+    root.render(
+        <Provider store={store}>
+            <App/>
+        </Provider>
+    );
 
 }
 

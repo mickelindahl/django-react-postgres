@@ -2,9 +2,12 @@
 
 export $(cat .env | xargs)
 
-TMP=$($CONDA_PYTHON_PATH manage.py migrate --check | grep ".* No migrations to apply.*" | wc -l)
+$CONDA_PYTHON_PATH manage.py makemigrations server
+$CONDA_PYTHON_PATH manage.py migrate --check
 
+TMP=$($CONDA_PYTHON_PATH manage.py migrate --check | grep ".* No migrations to apply.*" | wc -l)
 if [ "$TMP" = 0 ]; then
+
 
   $CONDA_PYTHON_PATH manage.py migrate
 

@@ -35,7 +35,8 @@ const InputFile = (props: TProps) => {
             />
             <button className={'btn btn-secondary'} onClick={()=>inputRef.current.click()}>Choose file</button>
             {isSelected ? (
-                <div>
+                <div className={'p-2'}>
+                    <small className={'text-muted'}>
                     <p>Filename: {selectedFile.name}</p>
                     <p>Filetype: {selectedFile.type}</p>
                     <p>Size in bytes: {selectedFile.size}</p>
@@ -43,9 +44,12 @@ const InputFile = (props: TProps) => {
                         lastModifiedDate:{' '}
                         {(new Date(selectedFile.lastModified)).toLocaleDateString()}
                     </p>
+                    </small>
                 </div>
             ) : (
-                <p>Select a file to show details</p>
+                <div className={'p-2'}>
+                <small className={'text-muted'}><p>Select a file to show details</p></small>
+                </div>
             )}
         </div>
     )

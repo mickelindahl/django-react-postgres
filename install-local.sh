@@ -104,7 +104,7 @@ if [ -f "$CREDENTIALS_PATH" ]; then
 
    if [ -z "$TMP" ]; then
        echo "No conda environment, creating ..."
-       ./conda-create "$CONDA_ENV_NAME" "$CONDA_PYTHON_VERSION"
+       ./shell/scripts/conda-create "$CONDA_ENV_NAME" "$CONDA_PYTHON_VERSION"
    fi
 
 else

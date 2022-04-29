@@ -13,7 +13,10 @@ import React, {useState} from 'react';
 type TProps = {
     headers?:{}
     onError:(error:any)=>void
-    onSuccess:(result:{message:string})=>void
+    onSuccess:(result:{
+        message:string,
+        user_data:{name:string, url:string, id:number}
+    })=>void
     path:string
 }
 
@@ -34,6 +37,14 @@ type TProps = {
          )
              .then((response) => response.json())
              .then((result) => {
+
+                 if(result.error){
+                     throw result.error
+                     // props.onError(result.error)
+                     // console.error('Error:', result.error);
+                     // return
+                 }
+
                  props.onSuccess(result)
                  console.log('Success:', result);
              })
@@ -45,7 +56,7 @@ type TProps = {
 
 
 
-    return {onFormUpload, setFormData}
+    return {formData,onFormUpload, setFormData}
  }
  
  export default useFormUpload

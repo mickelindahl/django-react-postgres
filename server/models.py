@@ -5,6 +5,7 @@ from datetime import datetime
 def user_directory_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
 
+    filename = '-'.join(filename.split(' '))
     now = datetime.now()  # current date and time
     date_time = now.strftime("%Y%m%d_%H%M%S")
     tmp = filename.split('.')
@@ -16,6 +17,7 @@ def user_directory_path(instance, filename):
 
 class UserData(models.Model):
     file = models.FileField(upload_to=user_directory_path)
+    file_name_original = models.TextField(blank=True, null=True)
     user_id = models.IntegerField()
 
     created_at = models.DateTimeField(auto_now_add=True)
