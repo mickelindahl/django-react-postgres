@@ -98,6 +98,16 @@ function liveUpdate(cb) {
     watch('frontend-react/resources/styles/**/*.scss', transpileStyles)
     // watch('frontend-react/resources/js/**/*.js', bundleJs)
     watch('**/templates/**/*.html').on('change', browserSync.reload);
+     watch('/build/js/app.js').on('add', p=>{
+
+         console.log('app.js add')
+         browserSync.reload(p)
+     });
+     watch('/build/js/app.js').on('change',  p=>{
+
+         console.log('app.js change')
+         browserSync.reload(p)
+     });
     cb()
 }
 

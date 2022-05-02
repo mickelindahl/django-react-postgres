@@ -6,11 +6,11 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 </head>
 <body style="height:100vh;">
-<div class="container d-flex justify-content-center align-items-center h-100">
-    <div>
-        {% block sidebar %}<!-- insert default navigation text for every page --> {% endblock %}
-        {% block content %}<!-- default content text (typically empty) --> {% endblock %}
-    </div>
+<div class="h-100">
+
+    {% block sidebar %}<!-- insert default navigation text for every page --> {% endblock %}
+    {% block content %}<!-- default content text (typically empty) --> {% endblock %}
+
 </div>
 <script src="{% static 'js/app.js' %}"></script>
 </body>

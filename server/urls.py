@@ -24,6 +24,7 @@ urlpatterns = [
 
                   path('api/app-state', api.app_state, name='api app state'),
                   path('api/file-upload', api.file_upload, name='api file upload'),
+                  path('api/file-upload/<int:file_id>', api.file_upload_file_id, name='api file upload'),
                   path('', views.app, name='main'),
                   # path(r'^login/$', auth_views.LoginView, name='login'),
                   # path(r'^logout/$', auth_views.auth_logout, name='logout'),

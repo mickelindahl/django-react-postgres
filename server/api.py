@@ -12,28 +12,10 @@ import json
 pp = pprint.pprint
 
 
-@csrf_exempt
-def app_state(request):
+def response_wrapper(fun, request, *args, **kwargs):
     try:
 
-        if request.method == 'GET':
-            user_data = UserData.objects.all().filter(user_id=request.user.id)
-            # print(user_data[0].file.name, user_data[0].file.url)
-            # print(serializers.serialize("json", user_data[0].file))
-            # user_data = serializers.serialize("json", user_data)
-            # print('map(lambda x:x,user_data)',list(map(lambda x:{"x":x.file.url},user_data)))
-            # print('json.parse(user_data)', user_data)
-            response = JsonResponse({
-                "userData":list(map(lambda x: {
-                    "url": x.file.url,
-                    "name": x.file_name_original,
-                    "created_at": x.created_at,
-                    "id": x.id
-                }, user_data)),
-                "message": 'ok'
-            })
-
-            return response
+        return fun(request, *args, **kwargs)
 
     except Exception as ex:
 
@@ -45,36 +27,90 @@ def app_state(request):
         return response
 
 
-@csrf_exempt
-def file_upload(request):
-    try:
-
-        if request.method == 'POST':
-            file = request.FILES['File']
-            user_data = UserData(
-                user_id=request.user.id,
-                file=file,
-                file_name_original=file.name
-            )
-            user_data.save()
-
+def _app_state(request):
+    if request.method == 'GET':
+        user_data = UserData.objects.all().filter(user_id=request.user.id)
         response = JsonResponse({
-            "user_data":{
-                    "url": user_data.file.url,
-                    "name": user_data.file_name_original,
-                    "created_at": user_data.created_at,
-                    "id": user_data.id
-                },
+            "userData": list(map(lambda x: {
+                "url": x.file.url,
+                "name": x.file_name_original,
+                "created_at": x.created_at,
+                "updated_at": x.updated_at,
+                "id": x.id
+            }, user_data)),
             "message": 'ok'
         })
 
         return response
 
-    except Exception as ex:
 
-        error = ''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__))
+def _file_upload(request):
+    if request.method == 'POST':
+        file = request.FILES['File']
+        user_data = UserData(
+            user_id=request.user.id,
+            file=file,
+            file_name_original=file.name
+        )
+        user_data.save()
 
-        response = JsonResponse({"error": error})
-        response.status_code = 500
+        return JsonResponse({
+            "user_data": {
+                "url": user_data.file.url,
+                "name": user_data.file_name_original,
+                "created_at": user_data.created_at,
+                "updated_at": user_data.updated_at,
+                "id": user_data.id
+            },
+            "message": 'created'
+        })
 
-        return response
+
+def _file_upload_file_id(request, file_id):
+    print('file_id', file_id)
+
+    if request.method == 'POST':
+        file = request.FILES['File']
+
+        user_data = UserData.objects.get(id=file_id)
+        old_file_path = user_data.file.path
+        user_data.file = file
+        user_data.file_name_original = file.name
+        os.remove(old_file_path)
+        user_data.save()
+
+        return JsonResponse({
+            "user_data": {
+                "url": user_data.file.url,
+                "name": user_data.file_name_original,
+                "created_at": user_data.created_at,
+                "updated_at": user_data.updated_at,
+                "id": user_data.id
+            },
+            "message": 'updated'
+        })
+
+    elif request.method == 'DELETE':
+        user_data = UserData.objects.get(id=file_id)
+        file_path = user_data.file.path
+        user_data.delete()
+        os.remove(file_path)
+
+        return JsonResponse({
+            "message": 'deleted'
+        })
+
+
+@csrf_exempt
+def app_state(request):
+    return response_wrapper(_app_state, request)
+
+
+@csrf_exempt
+def file_upload(request):
+    return response_wrapper(_file_upload, request)
+
+
+@csrf_exempt
+def file_upload_file_id(request, file_id):
+    return response_wrapper(_file_upload_file_id, request, file_id)
